@@ -1,0 +1,14 @@
+:root{--bg:#f7f9fc;--card:#fff;--muted:#6b7280;--accent:#2563eb}
+*{box-sizing:border-box;font-family:Segoe UI, Roboto, Arial, sans-serif}
+body{margin:0;background:var(--bg);color:#111}
+header{background:linear-gradient(90deg,#111827,#0f172a);color:#fff;padding:28px 20px}
+header h1{margin:0;font-size:28px}
+main{max-width:900px;margin:24px auto;padding:0 16px}
+#post-idea{margin-bottom:18px}
+form input,form textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;margin:8px 0}
+form button{background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:6px;cursor:pointer}
+.idea{background:var(--card);padding:14px;border-radius:8px;box-shadow:0 1px 3px rgba(2,6,23,0.06);margin-bottom:10px}
+.idea h3{margin:0 0 6px 0}
+.meta{color:var(--muted);font-size:13px;margin:0 0 8px}
+.actions{margin-top:8px}
+.actions button{margin-right:8px;padding:6px 10px;border-radius:6px;border:1px solid #e5e7eb;background:#fff;cursor:pointer}
