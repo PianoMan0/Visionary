@@ -1,0 +1,27 @@
+<?php
+// Example configuration for Visionary.
+// Copy this to `config.php` or set environment variables, but do NOT commit
+// secrets to version control. For local convenience you may create an
+// untracked `secrets.txt` with lines like `GITHUB_CLIENT_ID=...`.
+
+return [
+    'github_client_id' => '',
+    'github_client_secret' => '',
+    'base_url' => 'https://example.com/visionary',
+
+    'hackclub_client_id' => '',
+    'hackclub_client_secret' => '',
+
+    'hackatime_client_id' => '',
+    'hackatime_client_secret' => '',
+
+    'microsoft_client_id' => '',
+    'microsoft_client_secret' => '',
+
+    'slack_client_id' => '',
+    'slack_client_secret' => '',
+
+    // Admin password is optional; prefer setting `VISIONARY_ADMIN_PASSWORD`
+    // in your environment or adding it to `secrets.txt` (do NOT commit it).
+    'admin_password' => null,
+];

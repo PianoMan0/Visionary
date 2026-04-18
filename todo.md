@@ -1,0 +1,2 @@
+- Make it so you can login with Slack
+- Add challenges

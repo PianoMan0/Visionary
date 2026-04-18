@@ -1,14 +1,10 @@
 <?php
-// Handles GitHub OAuth callback and exchange. Requires client id/secret in config.php
 require_once __DIR__ . '/auth.php';
 $cfg = @include __DIR__ . '/config.php';
 $clientId = $cfg['github_client_id'] ?? '';
 $clientSecret = $cfg['github_client_secret'] ?? '';
 
-// Determine base URL dynamically from the current request when possible.
-// This makes OAuth work regardless of which host/port you run the PHP server on.
 function detect_base_url($cfg) {
-    // prefer explicit config if provided
     if (!empty($cfg['base_url'])) return rtrim($cfg['base_url'], '/');
     $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost');
@@ -18,7 +14,6 @@ function detect_base_url($cfg) {
 $base = detect_base_url($cfg);
 
 if (!empty($_GET['oauth'])) {
-    // start OAuth by redirecting to GitHub
     if (!$clientId) {
         echo "GitHub OAuth not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in environment or edit config.php.";
         exit;
@@ -31,14 +26,12 @@ if (!empty($_GET['oauth'])) {
     exit;
 }
 
-// handle callback
 if (!empty($_GET['code'])) {
     if (empty($_GET['state']) || $_GET['state'] !== ($_SESSION['gh_oauth_state'] ?? '')) {
         echo "Invalid OAuth state"; exit;
     }
     $code = $_GET['code'];
     $tokenUrl = 'https://github.com/login/oauth/access_token';
-    // include redirect_uri to ensure GitHub accepts the token exchange in stricter setups
     $postParams = ['client_id'=>$clientId,'client_secret'=>$clientSecret,'code'=>$code,'redirect_uri'=>$base . '/github_callback.php'];
     $post = http_build_query($postParams);
     $opts = [
@@ -53,7 +46,6 @@ if (!empty($_GET['code'])) {
     $data = $res ? json_decode($res, true) : null;
     if (empty($data['access_token'])) { echo "OAuth failed"; exit; }
     $token = $data['access_token'];
-    // fetch user
     $opts = [
         'http'=>[
             'method'=>'GET',
@@ -69,22 +61,29 @@ if (!empty($_GET['code'])) {
     $stmt->execute([$user['id']]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($row) {
+        $email = $user['email'] ?? null;
+        $stmt = $pdo->prepare('UPDATE users SET avatar_url = COALESCE(avatar_url, ?), email = COALESCE(email, ?) WHERE id = ?');
+        $stmt->execute([$user['avatar_url'] ?? null, $email, $row['id']]);
         login_user_by_id($row['id']);
         session_regenerate_id(true);
         header('Location: ideas.php'); exit;
     }
-    // create new user with role 'both' by default
+
     $username = $user['login'] ?? ('gh' . $user['id']);
+    // disallow usernames that contain forbidden words and log violations for admins
+    if ($bad = check_forbidden($username, 'username', null, 'GitHub OAuth signup')) {
+        $username = 'gh' . $user['id'];
+    }
     $now = date('c');
+    $email = $user['email'] ?? null;
     try {
-        $stmt = $pdo->prepare('INSERT INTO users (username, role, github_id, created_at) VALUES (?, ?, ?, ?)');
-        $stmt->execute([$username, 'both', $user['id'], $now]);
+        $stmt = $pdo->prepare('INSERT INTO users (username, role, github_id, avatar_url, email, created_at) VALUES (?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$username, 'both', $user['id'], $user['avatar_url'] ?? null, $email, $now]);
         $id = $pdo->lastInsertId();
     } catch (Exception $e) {
-        // fallback: username collision, append github id
         $username = $username . '_' . $user['id'];
-        $stmt = $pdo->prepare('INSERT INTO users (username, role, github_id, created_at) VALUES (?, ?, ?, ?)');
-        $stmt->execute([$username, 'both', $user['id'], $now]);
+        $stmt = $pdo->prepare('INSERT INTO users (username, role, github_id, avatar_url, created_at) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([$username, 'both', $user['id'], $user['avatar_url'] ?? null, $now]);
         $id = $pdo->lastInsertId();
     }
     login_user_by_id($id);

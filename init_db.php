@@ -17,7 +17,6 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS ideas (
     updated_at TEXT
 )");
 
-// create users table
 $pdo->exec("CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
@@ -29,10 +28,35 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS users (
 
 $now = date('c');
 $stmt = $pdo->prepare('INSERT INTO ideas (title, description, author_name, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)');
-$stmt->execute(["Example: Instant mockups", "A tool to create quick mockups from text prompts.", "Alice", 'open', $now, $now]);
-$stmt->execute(["Example: Open API for widgets", "An API to share reusable UI widgets for teams.", "Bob", 'open', $now, $now]);
+$stmt->execute(["Testing!", "A test post!", "Test", 'open', $now, $now]);
 
-// add sample user (username: demo, password: demo)
+$pdo->exec("CREATE TABLE IF NOT EXISTS idea_likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idea_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at TEXT,
+    FOREIGN KEY(idea_id) REFERENCES ideas(id),
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    UNIQUE(idea_id, user_id)
+)");
+
+$pdo->exec("CREATE TABLE IF NOT EXISTS posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    author_id INTEGER,
+    author_name TEXT,
+    status TEXT DEFAULT 'draft',
+    tags TEXT,
+    featured_image TEXT,
+    created_at TEXT,
+    updated_at TEXT,
+    published_at TEXT,
+    FOREIGN KEY(author_id) REFERENCES users(id)
+)");
+
+
 $check = $pdo->prepare('SELECT COUNT(*) FROM users WHERE username = ?');
 $check->execute(['demo']);
 if ($check->fetchColumn() == 0) {
